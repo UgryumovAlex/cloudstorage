@@ -18,24 +18,34 @@ public class CloudAuthHandler extends SimpleChannelInboundHandler<ServerCommand>
 
     @Override
     protected void channelRead0(ChannelHandlerContext ctx, ServerCommand s) throws Exception {
+        System.out.println("client " + ctx.channel() + " : " + s.getName());
+
         if ("auth".equals(s.getName())) {
             if (authenticateUser( s.getParams().get(0), s.getParams().get(1) ) ) {
                 ctx.writeAndFlush("USER_AUTHENTICATED");
+                System.out.println("USER_AUTHENTICATED");
             } else {
                 ctx.writeAndFlush("INCORRECT_LOGIN_OR_PASSWORD");
+                System.out.println("INCORRECT_LOGIN_OR_PASSWORD");
             }
 
         } else if ("reg".equals( s.getName() ) ){
-            if (registerUser(s.getParams().get(0), s.getParams().get(1), s.getParams().get(2))) {
+            if (registerUser(s.getParams().get(0), s.getParams().get(1))) {
                 cloudUser = getUser(s.getParams().get(0), s.getParams().get(1));
                 user_authenticated = true;
+                ctx.writeAndFlush("USER_REGISTERED");
+                System.out.println("USER_REGISTERED");
+            } else {
+                ctx.writeAndFlush("REGISTRATION_ERROR");
+                System.out.println("REGISTRATION_ERROR");
             }
-            ctx.writeAndFlush("USER_REGISTERED");
+
 
         } else if ("disconnect".equals( s.getName() ) ){
             cloudUser = null;
             user_authenticated = false;
             ctx.writeAndFlush("USER_DISCONNECTED");
+            System.out.println("USER_DISCONNECTED");
 
         } else {
             if (user_authenticated) {
@@ -58,7 +68,7 @@ public class CloudAuthHandler extends SimpleChannelInboundHandler<ServerCommand>
         try {
             connect();
             if (!connection.isClosed()) {
-                preparedStatement = connection.prepareStatement("SELECT login, password, nickname FROM users WHERE login= ? and password=?;");
+                preparedStatement = connection.prepareStatement("SELECT login, password FROM users WHERE login= ? and password=?;");
                 preparedStatement.setString(1, login);
                 preparedStatement.setString(2, password);
                 ResultSet rs = preparedStatement.executeQuery();
@@ -66,7 +76,6 @@ public class CloudAuthHandler extends SimpleChannelInboundHandler<ServerCommand>
                     return new CloudUser(
                                           rs.getString("login"),
                                           rs.getString("password"),
-                                          rs.getString("nickname"),
                                           rs.getString("login")
                                         );
                 }
@@ -83,13 +92,12 @@ public class CloudAuthHandler extends SimpleChannelInboundHandler<ServerCommand>
         return null;
     }
 
-    private Boolean registerUser(String login, String password, String nick) {
+    private Boolean registerUser(String login, String password) {
         try {
             connect();
             if (!connection.isClosed()) {
-                preparedStatement = connection.prepareStatement("SELECT count(id) as usrs FROM users WHERE login= ? and nickname=?;");
+                preparedStatement = connection.prepareStatement("SELECT count(id) as usrs FROM users WHERE login= ?;");
                 preparedStatement.setString(1, login);
-                preparedStatement.setString(2, nick);
 
                 int userFound = 0;
                 ResultSet rs = preparedStatement.executeQuery();
@@ -99,10 +107,9 @@ public class CloudAuthHandler extends SimpleChannelInboundHandler<ServerCommand>
                 if (userFound > 0) {
                     return false;
                 } else {
-                    preparedStatement = connection.prepareStatement("INSERT INTO users (login, password, nickname) values (?, ?, ?);");
+                    preparedStatement = connection.prepareStatement("INSERT INTO users (login, password) values (?, ?);");
                     preparedStatement.setString(1, login);
                     preparedStatement.setString(2, password);
-                    preparedStatement.setString(3, nick);
                     if (preparedStatement.executeUpdate() > 0) {
                         return true;
                     }

@@ -88,6 +88,6 @@ public class CloudStorageHandler extends SimpleChannelInboundHandler<CloudUserCo
     }
 
     private String getUserWelcome(CloudUser user) {
-        return "\r\n" + user.getNick() + " " + storageLogic.getUserPath() + " : ";
+        return "\r\n" + user.getLogin() + " " + storageLogic.getUserPath() + " : ";
     }
 }
