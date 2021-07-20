@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.*?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+
+<VBox alignment="center" xmlns="http://javafx.com/javafx/11.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.geekbrains.cloudstorage.client.Controller">
+    <VBox VBox.vgrow="ALWAYS">
+        <HBox VBox.vgrow="ALWAYS">
+            <VBox HBox.hgrow="ALWAYS">
+                <fx:include fx:id="clientPanel" source="panel.fxml" VBox.vgrow="ALWAYS"></fx:include>
+            </VBox>
+            <VBox alignment="CENTER" spacing="10.0">
+                <Button text="command1" />
+                <Button text="command2" />
+                <Button text="command3" />
+            </VBox>
+            <VBox HBox.hgrow="ALWAYS">
+                <Label fx:id="labelInfo"  alignment="CENTER" maxWidth="Infinity" text="SERVER SIDE" textAlignment="CENTER"
+                       HBox.hgrow="ALWAYS"/>
+                <HBox>
+                    <Button text="connect" onAction="#tryToLogin"/>
+                    <Button text="register" onAction="#tryToRegister"/>
+                    <Button text="disconnect" onAction="#tryToLogout"/>
+                    <TextField editable="false" HBox.hgrow="ALWAYS" />
+                    <Button text=".." />
+                    <Button text="~" />
+                </HBox>
+                <TableView VBox.vgrow="ALWAYS" />
+            </VBox>
+        </HBox>
+    </VBox>
+
+</VBox>

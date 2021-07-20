@@ -59,7 +59,7 @@ public class CommandValidateHandler extends SimpleChannelInboundHandler<String> 
     public void channelActive(ChannelHandlerContext ctx) throws Exception {
         commandPatterns = new HashMap<>();
         commandPatterns.put("auth", 2);
-        commandPatterns.put("reg", 3);
+        commandPatterns.put("reg", 2);
         commandPatterns.put("disconnect", 0);
 
         commandPatterns.put("ls", 0);
