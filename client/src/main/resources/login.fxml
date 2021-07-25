@@ -5,7 +5,7 @@
 <?import javafx.scene.layout.*?>
 <?import javafx.scene.text.*?>
 
-<VBox alignment="center" spacing="5.0" VBox.vgrow="ALWAYS" xmlns="http://javafx.com/javafx/11.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.geekbrains.cloudstorage.client.LoginController">
+<VBox alignment="center" spacing="5.0" VBox.vgrow="ALWAYS" xmlns="http://javafx.com/javafx/8.0.271" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.geekbrains.cloudstorage.client.LoginController">
 <HBox>
     <Label prefHeight="17.0" prefWidth="65.0" text="login : ">
          <font>
@@ -21,7 +21,7 @@
     </Label>
     <PasswordField fx:id="passwordField" promptText="password" />
 </HBox>
-<Button fx:id="connectButton" minWidth="100" onAction="#tryToLogin" text="Connect" />
+<Button fx:id="connectButton" minWidth="100" onAction="#tryToLogin" text="Connect"/>
    <padding>
       <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
    </padding>

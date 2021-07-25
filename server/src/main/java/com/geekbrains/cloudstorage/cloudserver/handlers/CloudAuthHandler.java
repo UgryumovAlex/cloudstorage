@@ -1,11 +1,18 @@
 package com.geekbrains.cloudstorage.cloudserver.handlers;
 
-import com.geekbrains.cloudstorage.cloudserver.CloudUser;
 import com.geekbrains.cloudstorage.cloudserver.CloudUserCommand;
 import com.geekbrains.cloudstorage.cloudserver.ServerCommand;
+import com.geekbrains.cloudstorage.common.CloudUser;
+import com.geekbrains.cloudstorage.common.ResponseCommand;
+import com.geekbrains.cloudstorage.common.ServerResponse;
+import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.SimpleChannelInboundHandler;
 
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.ObjectOutputStream;
+import java.nio.ByteBuffer;
 import java.sql.*;
 
 public class CloudAuthHandler extends SimpleChannelInboundHandler<ServerCommand> {
@@ -18,40 +25,40 @@ public class CloudAuthHandler extends SimpleChannelInboundHandler<ServerCommand>
 
     @Override
     protected void channelRead0(ChannelHandlerContext ctx, ServerCommand s) throws Exception {
-        System.out.println("client " + ctx.channel() + " : " + s.getName());
 
         if ("auth".equals(s.getName())) {
             if (authenticateUser( s.getParams().get(0), s.getParams().get(1) ) ) {
-                ctx.writeAndFlush("USER_AUTHENTICATED");
-                System.out.println("USER_AUTHENTICATED");
+                sendResponse(ctx, new ServerResponse<>(ResponseCommand.AUTH_OK, cloudUser));
+                System.out.println("USER_AUTHENTICATED\r\n");
             } else {
-                ctx.writeAndFlush("INCORRECT_LOGIN_OR_PASSWORD");
-                System.out.println("INCORRECT_LOGIN_OR_PASSWORD");
+                sendResponse(ctx, new ServerResponse<>(ResponseCommand.AUTH_FAIL));
+                System.out.println("INCORRECT_LOGIN_OR_PASSWORD\r\n");
             }
 
         } else if ("reg".equals( s.getName() ) ){
             if (registerUser(s.getParams().get(0), s.getParams().get(1))) {
                 cloudUser = getUser(s.getParams().get(0), s.getParams().get(1));
                 user_authenticated = true;
-                ctx.writeAndFlush("USER_REGISTERED");
-                System.out.println("USER_REGISTERED");
+                sendResponse(ctx, new ServerResponse<>(ResponseCommand.REG_OK, cloudUser));
+                System.out.println("USER_REGISTERED\r\n");
             } else {
-                ctx.writeAndFlush("REGISTRATION_ERROR");
-                System.out.println("REGISTRATION_ERROR");
+                user_authenticated = false;
+                sendResponse(ctx, new ServerResponse<>(ResponseCommand.REG_FAIL));
+                System.out.println("REGISTRATION_ERROR\r\n");
             }
 
 
         } else if ("disconnect".equals( s.getName() ) ){
             cloudUser = null;
             user_authenticated = false;
-            ctx.writeAndFlush("USER_DISCONNECTED");
-            System.out.println("USER_DISCONNECTED");
+            sendResponse(ctx, new ServerResponse<>(ResponseCommand.AUTH_OUT));
+            System.out.println("USER_DISCONNECTED\r\n");
 
         } else {
             if (user_authenticated) {
                 ctx.fireChannelRead(new CloudUserCommand(cloudUser, s));
             } else {
-                ctx.writeAndFlush("YOU_NEED_TO_BE_AUTHENTICATED");
+                sendResponse(ctx, new ServerResponse<>(ResponseCommand.AUTH_REQUIRED, null));
             }
         }
     }
@@ -60,6 +67,8 @@ public class CloudAuthHandler extends SimpleChannelInboundHandler<ServerCommand>
         cloudUser = getUser(login, password);
         if (cloudUser != null) {
             user_authenticated = true;
+        } else {
+            user_authenticated = false;
         }
         return user_authenticated;
     }
@@ -136,5 +145,18 @@ public class CloudAuthHandler extends SimpleChannelInboundHandler<ServerCommand>
     private void disconnect() throws SQLException {
         preparedStatement.close();
         connection.close();
+    }
+
+    private void sendResponse(ChannelHandlerContext ctx, ServerResponse<?> serverResponse) {
+        ByteBuf bb = ctx.alloc().heapBuffer();
+        try {
+            ByteArrayOutputStream baos = new ByteArrayOutputStream();
+            ObjectOutputStream oos = new ObjectOutputStream(baos);
+            oos.writeObject(serverResponse);
+            bb.writeBytes(baos.toByteArray());
+            ctx.channel().writeAndFlush(bb);
+        } catch(IOException e) {
+            e.printStackTrace();
+        }
     }
 }

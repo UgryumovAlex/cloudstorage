@@ -1,12 +1,21 @@
 package com.geekbrains.cloudstorage.cloudserver.handlers;
 
-import com.geekbrains.cloudstorage.cloudserver.CloudUser;
+
 import com.geekbrains.cloudstorage.cloudserver.CloudUserCommand;
 import com.geekbrains.cloudstorage.cloudserver.StorageLogic;
+import com.geekbrains.cloudstorage.common.ResponseCommand;
+import com.geekbrains.cloudstorage.common.ServerResponse;
+import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.SimpleChannelInboundHandler;
 
+import java.io.ByteArrayOutputStream;
 import java.io.File;
+import java.io.IOException;
+import java.io.ObjectOutputStream;
+import java.nio.file.DirectoryNotEmptyException;
+import java.nio.file.FileAlreadyExistsException;
+import java.nio.file.NoSuchFileException;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
@@ -21,7 +30,6 @@ public class CloudStorageHandler extends SimpleChannelInboundHandler<CloudUserCo
 
     @Override
     protected void channelRead0(ChannelHandlerContext ctx, CloudUserCommand s) throws Exception {
-        List<String> result = new ArrayList<>();
 
         try {
             if (storageLogic == null) {
@@ -31,63 +39,102 @@ public class CloudStorageHandler extends SimpleChannelInboundHandler<CloudUserCo
             switch (s.getCommand().getName()) {
 
                 case "ls":
-                    result.add(storageLogic.getFilesList());
+                    sendResponse(ctx, new ServerResponse<>(ResponseCommand.FILES_LIST, storageLogic.getFilesList(), storageLogic.getUserPath()));
                     break;
 
                 case "mkdir":
-                    result.add(storageLogic.createDirectory(s.getCommand().getParams().get(0)));
+                    try {
+                        if (storageLogic.createDirectory(s.getCommand().getParams().get(0))) {
+                            sendResponse(ctx, new ServerResponse<>(ResponseCommand.FILES_MKDIR_OK, storageLogic.getFilesList(), storageLogic.getUserPath()));
+                        }
+                    } catch (FileAlreadyExistsException e) {
+                        sendResponse(ctx, new ServerResponse<>(ResponseCommand.FILES_MKDIR_ALREADY_EXISTS));
+                    } catch (Exception e) {
+                        sendResponse(ctx, new ServerResponse<>(ResponseCommand.FILES_MKDIR_FAIL));
+                    }
                     break;
 
                 case "touch":
-                    result.add(storageLogic.createFile(s.getCommand().getParams().get(0)));
+                    try {
+                        if (storageLogic.createFile(s.getCommand().getParams().get(0))) {
+                            sendResponse(ctx, new ServerResponse<>(ResponseCommand.FILES_TOUCH_OK, storageLogic.getFilesList(), storageLogic.getUserPath()));
+                        }
+                    } catch (FileAlreadyExistsException e) {
+                        sendResponse(ctx, new ServerResponse<>(ResponseCommand.FILES_TOUCH_ALREADY_EXISTS));
+                    } catch (Exception e) {
+                        sendResponse(ctx, new ServerResponse<>(ResponseCommand.FILES_TOUCH_FAIL));
+                    }
+
                     break;
 
                 case "cd":
-                    storageLogic.changeDirectory(s.getCommand().getParams().get(0));
+                    try {
+                        storageLogic.changeDirectory(s.getCommand().getParams().get(0));
+                        sendResponse(ctx, new ServerResponse<>(ResponseCommand.FILES_CD_OK, storageLogic.getFilesList(), storageLogic.getUserPath()));
+                    } catch (IllegalArgumentException e) {
+                        sendResponse(ctx, new ServerResponse<>(ResponseCommand.FILES_CD_FAIL));
+                    }
                     break;
 
                 case "rm":
                     lastCommandWithResponseRequest = "rm";
                     lastCommandParam = s.getCommand().getParams().get(0);
-                    result.add(storageLogic.removeFileOrDirectory(s.getCommand().getParams().get(0)));
+                    try {
+                        if (storageLogic.removeFileOrDirectory(s.getCommand().getParams().get(0))) {
+                            sendResponse(ctx, new ServerResponse<>(ResponseCommand.FILES_RM_OK, storageLogic.getFilesList(), storageLogic.getUserPath()));
+                        }
+                    } catch (DirectoryNotEmptyException e) {
+                        sendResponse(ctx, new ServerResponse<>(ResponseCommand.FILES_RM_DELETE_DIR));
+                    } catch (NoSuchFileException e) {
+                        sendResponse(ctx, new ServerResponse<>(ResponseCommand.FILES_RM_NOT_EXISTS));
+                    } catch (IOException e) {
+                        sendResponse(ctx, new ServerResponse<>(ResponseCommand.FILES_RM_FAIL));
+                    }
                     break;
 
                 case "N":
                     if (lastCommandWithResponseRequest != null) {
                         lastCommandWithResponseRequest = null;
                         lastCommandParam = null;
+                        sendResponse(ctx, new ServerResponse<>(ResponseCommand.FILES_RM_OK, storageLogic.getFilesList(), storageLogic.getUserPath()));
                     }
                     break;
 
                 case "Y":
                     if (lastCommandWithResponseRequest != null && lastCommandWithResponseRequest.equals("rm")) {
-                        storageLogic.deleteNotEmptyDirectory(lastCommandParam);
+                        try {
+                            storageLogic.deleteNotEmptyDirectory(lastCommandParam);
+                            sendResponse(ctx, new ServerResponse<>(ResponseCommand.FILES_RM_OK, storageLogic.getFilesList(), storageLogic.getUserPath()));
+
+                        } catch (IOException e) {
+                            sendResponse(ctx, new ServerResponse<>(ResponseCommand.FILES_RM_FAIL));
+                        }
                         lastCommandWithResponseRequest = null;
                         lastCommandParam = null;
-                        result.add("deleted\r\n");
                     }
                     break;
 
                 case "copy":
                     storageLogic.copy(s.getCommand().getParams().get(0), s.getCommand().getParams().get(1));
-                    result.add("copied\r\n");
                     break;
             }
 
         } catch (Exception e) {
-            result.add(e.getMessage());
+            e.printStackTrace();
         }
-
-        if (result.size() > 0) {
-            for (String msg : result) {
-                ctx.writeAndFlush(msg);
-            }
-        }
-        ctx.writeAndFlush(getUserWelcome(s.getUser())); //Временно для тестирования через PUTTY
 
     }
 
-    private String getUserWelcome(CloudUser user) {
-        return "\r\n" + user.getLogin() + " " + storageLogic.getUserPath() + " : ";
+    private void sendResponse(ChannelHandlerContext ctx, ServerResponse<?> serverResponse) {
+        ByteBuf bb = ctx.alloc().heapBuffer();
+        try {
+            ByteArrayOutputStream baos = new ByteArrayOutputStream();
+            ObjectOutputStream oos = new ObjectOutputStream(baos);
+            oos.writeObject(serverResponse);
+            bb.writeBytes(baos.toByteArray());
+            ctx.channel().writeAndFlush(bb);
+        } catch(IOException e) {
+            e.printStackTrace();
+        }
     }
 }

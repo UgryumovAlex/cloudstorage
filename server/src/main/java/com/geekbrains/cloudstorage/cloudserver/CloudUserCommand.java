@@ -1,5 +1,7 @@
 package com.geekbrains.cloudstorage.cloudserver;
 
+import com.geekbrains.cloudstorage.common.CloudUser;
+
 public class CloudUserCommand {
     private CloudUser user;
     private ServerCommand command;

@@ -1,9 +1,10 @@
-package com.geekbrains.cloudstorage.cloudserver;
+package com.geekbrains.cloudstorage.common;
 
-public class CloudUser {
+import java.io.Serializable;
+
+public class CloudUser implements Serializable {
     private String login;
     private String password;
-
     private String userDirectory;
 
     public CloudUser(String login, String password, String userDirectory) {

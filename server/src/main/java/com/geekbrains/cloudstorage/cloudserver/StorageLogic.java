@@ -1,11 +1,12 @@
 package com.geekbrains.cloudstorage.cloudserver;
 
+import com.geekbrains.cloudstorage.common.FileInfo;
+
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.*;
 import java.util.List;
-
-import static java.nio.charset.StandardCharsets.UTF_8;
+import java.util.stream.Collectors;
 
 public class StorageLogic {
 
@@ -29,45 +30,37 @@ public class StorageLogic {
         }
     }
 
-    public Path getUserPath() {
-        return rootPath.relativize(currentPath);
+    public String getUserPath() {
+        return rootPath.relativize(currentPath).toString();
     }
 
-    public String getFilesList() {
-        String[] files = new File(currentPath.toString()).list();
-        StringBuilder sb = new StringBuilder();
-        if (files != null && files.length > 0) {
-            for (String file : files) {
-                if (Files.isDirectory(Paths.get(currentPath.toString() + File.separator + file))) {
-                    sb.append(file.toUpperCase()).append("\\..");
-                } else {
-                    sb.append(file);
-                }
-                sb.append("\r\n");
-            }
+    public List<FileInfo> getFilesList() {
+        try {
+            return Files.list(currentPath).map(FileInfo::new).collect(Collectors.toList());
+        } catch (IOException e) {
+            e.printStackTrace();
         }
-        return sb.toString();
+        return null;
     }
 
-    public String createDirectory(String newDir) throws IOException {
+    public Boolean createDirectory(String newDir) throws IOException {
         Path newDirectory = Paths.get(currentPath.toString() + File.separator + newDir);
         if (Files.exists(newDirectory)) {
-            throw new FileAlreadyExistsException("DIRECTORY_EXISTS_ALREADY"); //потомок IOEXCEPTION
+            throw new FileAlreadyExistsException("DIRECTORY_EXISTS_ALREADY");
         } else {
             Files.createDirectory(newDirectory);
+            return true;
         }
-        return "DIRECTORY_CREATED";
     }
 
-    public String createFile(String newFileName) throws IOException {
+    public Boolean createFile(String newFileName) throws IOException {
         Path newFile = Paths.get(currentPath.toString() + File.separator + newFileName);
         if (Files.exists(newFile)) {
-            throw new FileAlreadyExistsException("FILE_EXISTS_ALREADY"); //потомок IOEXCEPTION
-
+            throw new FileAlreadyExistsException("FILE_EXISTS_ALREADY");
         } else {
             Files.createFile(newFile);
+            return true;
         }
-        return "FILE_CREATED";
     }
 
     public void changeDirectory(String newDir) throws IllegalArgumentException {
@@ -87,19 +80,20 @@ public class StorageLogic {
         }
     }
 
-    public String removeFileOrDirectory(String pathToRemove) throws IOException {
+    public Boolean removeFileOrDirectory(String pathToRemove) throws IOException {
         Path deletePath = Paths.get(currentPath.toString() + File.separator + pathToRemove);
         if (!Files.exists(deletePath)) {
             throw new NoSuchFileException("DO_NOT_EXIST");
         } else {
             try {
-                Files.delete(deletePath); //В этом месте, если пытаемся удалить непустой каталог,
-                                          // сгенерится DirectoryNotEmptyException
+                Files.delete(deletePath);
             } catch (DirectoryNotEmptyException e) {
-                return "directory is not empty, delete anyway? Y/N\r\n";
+                throw new DirectoryNotEmptyException("NOT_EMPTY_DIRECTORY");
+            } catch (IOException e) {
+                throw new IOException("ERROR");
             }
         }
-        return "DELETED";
+        return true;
     }
 
     public void deleteNotEmptyDirectory(String directory) throws IOException {
