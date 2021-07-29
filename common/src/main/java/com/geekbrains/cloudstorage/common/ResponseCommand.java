@@ -20,5 +20,9 @@ public enum ResponseCommand {
     FILES_RM_OK,
     FILES_RM_NOT_EXISTS,
     FILES_RM_DELETE_DIR,
-    FILES_RM_FAIL
+    FILES_RM_FAIL,
+
+    FILE_UPLOAD,
+    FILE_UPLOAD_SUCCESS,
+    FILE_DOWNLOAD
 }

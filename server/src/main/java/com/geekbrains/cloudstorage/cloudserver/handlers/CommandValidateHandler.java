@@ -71,5 +71,8 @@ public class CommandValidateHandler extends SimpleChannelInboundHandler<String> 
 
         commandPatterns.put("Y", 0);
         commandPatterns.put("N", 0);
+
+        commandPatterns.put("uploadFile", 2);
+        commandPatterns.put("downloadFile", 2);
     }
 }

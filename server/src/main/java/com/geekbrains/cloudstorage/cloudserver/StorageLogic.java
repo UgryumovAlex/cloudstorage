@@ -34,6 +34,10 @@ public class StorageLogic {
         return rootPath.relativize(currentPath).toString();
     }
 
+    public String getCurrentPath() {
+        return currentPath.toString();
+    }
+
     public List<FileInfo> getFilesList() {
         try {
             return Files.list(currentPath).map(FileInfo::new).collect(Collectors.toList());

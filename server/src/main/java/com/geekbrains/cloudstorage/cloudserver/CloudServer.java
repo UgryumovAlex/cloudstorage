@@ -1,8 +1,6 @@
 package com.geekbrains.cloudstorage.cloudserver;
 
-import com.geekbrains.cloudstorage.cloudserver.handlers.CloudAuthHandler;
-import com.geekbrains.cloudstorage.cloudserver.handlers.CloudStorageHandler;
-import com.geekbrains.cloudstorage.cloudserver.handlers.CommandValidateHandler;
+import com.geekbrains.cloudstorage.cloudserver.handlers.*;
 import io.netty.bootstrap.ServerBootstrap;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelFuture;
@@ -28,6 +26,8 @@ public class CloudServer {
                         @Override
                         protected void initChannel(Channel channel) throws Exception {
                             channel.pipeline().addLast(
+                                    new FileReceiverHandler(),
+                                    //new FileSenderHandler(),
                                     new StringDecoder(),
                                     new StringEncoder(),
                                     new CommandValidateHandler(),

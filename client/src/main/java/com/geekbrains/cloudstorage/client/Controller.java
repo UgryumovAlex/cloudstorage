@@ -624,34 +624,71 @@ public class Controller implements Initializable {
         }
     }
 
+    private void uploadFile(String fileName, long size) {
+        sendCommand(String.format("uploadFile %s %s", fileName, size));
+
+        File file = new File(pathField.getText() + File.separator + fileName);
+        try {
+            RandomAccessFile randomAccessFile = new RandomAccessFile(file, "r");
+            randomAccessFile.seek(0);
+
+            //long size = randomAccessFile.length();
+            byte[] buffer = new byte[1024];
+
+            for (int i = 0; i < (size + (buffer.length - 1)) / (buffer.length); i++) {
+                int read = randomAccessFile.read(buffer);
+                out.write(buffer, 0, read);
+            }
+            randomAccessFile.close();
+
+            Object o = readObject();
+            if (o instanceof ServerResponse) {
+                ServerResponse sr = (ServerResponse) o;
+                if (sr.getResponseCommand() == ResponseCommand.FILE_UPLOAD_SUCCESS) {
+                    getRemoteFiles();
+                    Alert alert = new Alert(Alert.AlertType.INFORMATION, "Upload file completed successfully", ButtonType.OK);
+                    alert.showAndWait();
+                } else {
+                    Alert alert = new Alert(Alert.AlertType.WARNING, "Upload file error", ButtonType.OK);
+                    alert.showAndWait();
+                }
+            }
+
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
     public void tryToUploadFile(ActionEvent actionEvent) {
         if (clientTable.getSelectionModel().getSelectedItem() != null) {
             FileInfo fi = clientTable.getSelectionModel().getSelectedItem();
-            System.out.println(fi.getFileName());
-
-            /* Реализация в процессе, для ДЗ № 6 прикроем
-
-
-            FileUploadFile uploadFile = new FileUploadFile();
-            File file = new File(pathField.getText() + File.separator + fi.getFileName());
-            uploadFile.setFile(file);
-            uploadFile.setFileName(fi.getFileName());
-            uploadFile.setStarPos(0); // Начальная позиция файла
-
-            RandomAccessFile randomAccessFile = null;
-            try {
-                randomAccessFile = new RandomAccessFile(uploadFile.getFile(), "r");
-                randomAccessFile.seek(uploadFile.getStarPos());
-
-            } catch (FileNotFoundException e) {
-                e.printStackTrace();
-            } catch (IOException e) {
-                e.printStackTrace();
+            if (fi.getFileType() == FileInfo.FileType.FILE) {
+                uploadFile(fi.getFileName(), fi.getSize());
             }
-            */
-
         } else {
             Alert alert = new Alert(Alert.AlertType.WARNING, "Choose file or directory to upload to server", ButtonType.OK);
+            alert.showAndWait();
+        }
+    }
+
+    public void tryToDownloadFile(ActionEvent actionEvent) {
+        if (remoteTable.getSelectionModel().getSelectedItem() != null) {
+            FileInfo fi = remoteTable.getSelectionModel().getSelectedItem();
+            if (fi.getFileType() == FileInfo.FileType.FILE) { //Пока сделаем только для файла, каталог позднее
+                /*
+                sendCommand(String.format("downloadFile %s %s", fi.getFileName(), fi.getSize()));
+                try {
+                    out.write("get_file_chunk".getBytes(StandardCharsets.UTF_8));
+                    out.flush();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+                */
+            }
+        } else {
+            Alert alert = new Alert(Alert.AlertType.WARNING, "Choose file or directory to delete", ButtonType.OK);
             alert.showAndWait();
         }
     }

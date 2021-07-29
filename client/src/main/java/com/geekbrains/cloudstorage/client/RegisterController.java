@@ -2,9 +2,7 @@ package com.geekbrains.cloudstorage.client;
 
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
-import javafx.scene.control.Button;
-import javafx.scene.control.PasswordField;
-import javafx.scene.control.TextField;
+import javafx.scene.control.*;
 import javafx.stage.Stage;
 
 public class RegisterController {
@@ -15,6 +13,9 @@ public class RegisterController {
     private TextField loginField;
     @FXML
     private PasswordField passwordField;
+    @FXML
+    private PasswordField confirmField;
+
 
     @FXML
     private Button registerButton;
@@ -23,11 +24,18 @@ public class RegisterController {
 
         String login = loginField.getText().trim();
         String password = passwordField.getText().trim();
+        String confirmPassword = confirmField.getText().trim();
 
-        controller.registration(login, password);
+        if (password.equals(confirmPassword)) {
 
-        Stage stage = (Stage) registerButton.getScene().getWindow();
-        stage.close();
+            controller.registration(login, password);
+
+            Stage stage = (Stage) registerButton.getScene().getWindow();
+            stage.close();
+        } else {
+            Alert alert = new Alert(Alert.AlertType.WARNING, "Password does not equal to it's confirmation, please re-enter", ButtonType.OK);
+            alert.showAndWait();
+        }
     }
 
     public void setController(Controller controller) {

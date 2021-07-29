@@ -18,7 +18,7 @@
             </VBox>
             <VBox alignment="CENTER" spacing="10.0">
                 <Button fx:id="btnUpload" prefHeight="25.0" prefWidth="75.0" text="upload" onAction="#tryToUploadFile"/>
-                <Button fx:id="btnDownload" prefHeight="25.0" prefWidth="75.0" text="download" />
+                <Button fx:id="btnDownload" prefHeight="25.0" prefWidth="75.0" text="download" onAction="#tryToDownloadFile"/>
             </VBox>
             <VBox HBox.hgrow="ALWAYS">
                 <Label fx:id="labelInfo" alignment="CENTER" maxWidth="Infinity" text="SERVER SIDE" textAlignment="CENTER" HBox.hgrow="ALWAYS" />

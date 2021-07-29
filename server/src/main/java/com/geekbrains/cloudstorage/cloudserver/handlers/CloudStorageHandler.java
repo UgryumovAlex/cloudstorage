@@ -3,6 +3,8 @@ package com.geekbrains.cloudstorage.cloudserver.handlers;
 
 import com.geekbrains.cloudstorage.cloudserver.CloudUserCommand;
 import com.geekbrains.cloudstorage.cloudserver.StorageLogic;
+import com.geekbrains.cloudstorage.common.FileDownload;
+import com.geekbrains.cloudstorage.common.FileUpload;
 import com.geekbrains.cloudstorage.common.ResponseCommand;
 import com.geekbrains.cloudstorage.common.ServerResponse;
 import io.netty.buffer.ByteBuf;
@@ -17,8 +19,6 @@ import java.nio.file.DirectoryNotEmptyException;
 import java.nio.file.FileAlreadyExistsException;
 import java.nio.file.NoSuchFileException;
 import java.nio.file.Paths;
-import java.util.ArrayList;
-import java.util.List;
 
 
 public class CloudStorageHandler extends SimpleChannelInboundHandler<CloudUserCommand> {
@@ -115,7 +115,24 @@ public class CloudStorageHandler extends SimpleChannelInboundHandler<CloudUserCo
                     break;
 
                 case "copy":
-                    storageLogic.copy(s.getCommand().getParams().get(0), s.getCommand().getParams().get(1));
+                    //storageLogic.copy(s.getCommand().getParams().get(0), s.getCommand().getParams().get(1));
+                    break;
+
+                case "uploadFile":
+                    File fileUp = new File(storageLogic.getCurrentPath() + File.separator + s.getCommand().getParams().get(0));
+                    FileUpload fu = new FileUpload(fileUp, Long.parseLong(s.getCommand().getParams().get(1)));
+                    if (fu.getSize() != 0) {
+                        ctx.channel().pipeline().fireUserEventTriggered(fu);
+                    }
+                    break;
+
+                case "downloadFile":
+                    /*
+                    System.out.println("CloudStorageHandler : downloadFile");
+                    File fileDown = new File(storageLogic.getCurrentPath() + File.separator + s.getCommand().getParams().get(0));
+                    FileDownload fd = new FileDownload(fileDown, Long.parseLong(s.getCommand().getParams().get(1)));
+                    ctx.channel().pipeline().fireUserEventTriggered(fd);
+                    */
                     break;
             }
 
