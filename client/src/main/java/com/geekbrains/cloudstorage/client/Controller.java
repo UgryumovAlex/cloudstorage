@@ -632,8 +632,7 @@ public class Controller implements Initializable {
             RandomAccessFile randomAccessFile = new RandomAccessFile(file, "r");
             randomAccessFile.seek(0);
 
-            //long size = randomAccessFile.length();
-            byte[] buffer = new byte[1024];
+            byte[] buffer = new byte[16*1024];
 
             for (int i = 0; i < (size + (buffer.length - 1)) / (buffer.length); i++) {
                 int read = randomAccessFile.read(buffer);
@@ -652,6 +651,10 @@ public class Controller implements Initializable {
                     Alert alert = new Alert(Alert.AlertType.WARNING, "Upload file error", ButtonType.OK);
                     alert.showAndWait();
                 }
+            } else {
+                getRemoteFiles();
+                Alert alert = new Alert(Alert.AlertType.ERROR, "Upload file error", ButtonType.OK);
+                alert.showAndWait();
             }
 
         } catch (FileNotFoundException e) {
@@ -673,22 +676,56 @@ public class Controller implements Initializable {
         }
     }
 
+    private void downloadFile(String fileName, long size) {
+        try {
+            File file = new File(pathField.getText() + File.separator + fileName);
+            if (!file.exists()) {
+                sendCommand(String.format("downloadFile %s %s", fileName, size));
+
+                RandomAccessFile randomAccessFile = new RandomAccessFile(file, "rw");
+                randomAccessFile.seek(0);
+
+                byte[] buffer = new byte[16*1024];
+
+                for (int i = 0; i < (size + (buffer.length - 1)) / (buffer.length); i++) {
+                    out.write("get_file_chunk".getBytes(StandardCharsets.UTF_8)); //Запрос серверу на порцию файла
+                    int read = in.read(buffer);
+                    randomAccessFile.write(buffer,0, read);
+                }
+                randomAccessFile.close();
+
+                Object o = readObject();
+                if (o instanceof ServerResponse) {
+                    ServerResponse sr = (ServerResponse) o;
+                    if (sr.getResponseCommand() == ResponseCommand.FILE_DOWNLOAD_SUCCESS) {
+                        getLocalFiles(Paths.get(pathField.getText()));
+                        Alert alert = new Alert(Alert.AlertType.INFORMATION, "Download file completed successfully", ButtonType.OK);
+                        alert.showAndWait();
+                    } else {
+                        Alert alert = new Alert(Alert.AlertType.WARNING, "Download file error", ButtonType.OK);
+                        alert.showAndWait();
+                    }
+                } else {
+                    Alert alert = new Alert(Alert.AlertType.ERROR, "Download file error", ButtonType.OK);
+                    alert.showAndWait();
+                }
+            } else {
+                Alert alert = new Alert(Alert.AlertType.WARNING, "File exists already in target directory", ButtonType.OK);
+                alert.showAndWait();
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
     public void tryToDownloadFile(ActionEvent actionEvent) {
         if (remoteTable.getSelectionModel().getSelectedItem() != null) {
             FileInfo fi = remoteTable.getSelectionModel().getSelectedItem();
             if (fi.getFileType() == FileInfo.FileType.FILE) { //Пока сделаем только для файла, каталог позднее
-                /*
-                sendCommand(String.format("downloadFile %s %s", fi.getFileName(), fi.getSize()));
-                try {
-                    out.write("get_file_chunk".getBytes(StandardCharsets.UTF_8));
-                    out.flush();
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-                */
+                downloadFile(fi.getFileName(), fi.getSize());
             }
         } else {
-            Alert alert = new Alert(Alert.AlertType.WARNING, "Choose file or directory to delete", ButtonType.OK);
+            Alert alert = new Alert(Alert.AlertType.WARNING, "Choose file or directory to download", ButtonType.OK);
             alert.showAndWait();
         }
     }

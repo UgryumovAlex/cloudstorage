@@ -3,14 +3,16 @@ package com.geekbrains.cloudstorage.common;
 import java.io.File;
 import java.io.Serializable;
 
-public class FileUpload implements Serializable {
+public class FileProcess implements Serializable {
 
     private File file;
     private long size;
+    private String processDirection;
 
-    public FileUpload(File file, long size) {
+    public FileProcess(File file, long size, String processDirection) {
         this.file = file;
         this.size = size;
+        this.processDirection = processDirection;
     }
 
     public File getFile() {
@@ -19,5 +21,9 @@ public class FileUpload implements Serializable {
 
     public long getSize() {
         return size;
+    }
+
+    public String getProcessDirection() {
+        return processDirection;
     }
 }

@@ -3,8 +3,7 @@ package com.geekbrains.cloudstorage.cloudserver.handlers;
 
 import com.geekbrains.cloudstorage.cloudserver.CloudUserCommand;
 import com.geekbrains.cloudstorage.cloudserver.StorageLogic;
-import com.geekbrains.cloudstorage.common.FileDownload;
-import com.geekbrains.cloudstorage.common.FileUpload;
+import com.geekbrains.cloudstorage.common.FileProcess;
 import com.geekbrains.cloudstorage.common.ResponseCommand;
 import com.geekbrains.cloudstorage.common.ServerResponse;
 import io.netty.buffer.ByteBuf;
@@ -120,19 +119,18 @@ public class CloudStorageHandler extends SimpleChannelInboundHandler<CloudUserCo
 
                 case "uploadFile":
                     File fileUp = new File(storageLogic.getCurrentPath() + File.separator + s.getCommand().getParams().get(0));
-                    FileUpload fu = new FileUpload(fileUp, Long.parseLong(s.getCommand().getParams().get(1)));
+                    FileProcess fu = new FileProcess(fileUp, Long.parseLong(s.getCommand().getParams().get(1)), "UPLOAD");
                     if (fu.getSize() != 0) {
                         ctx.channel().pipeline().fireUserEventTriggered(fu);
                     }
                     break;
 
                 case "downloadFile":
-                    /*
-                    System.out.println("CloudStorageHandler : downloadFile");
                     File fileDown = new File(storageLogic.getCurrentPath() + File.separator + s.getCommand().getParams().get(0));
-                    FileDownload fd = new FileDownload(fileDown, Long.parseLong(s.getCommand().getParams().get(1)));
-                    ctx.channel().pipeline().fireUserEventTriggered(fd);
-                    */
+                    FileProcess fd = new FileProcess(fileDown, Long.parseLong(s.getCommand().getParams().get(1)), "DOWNLOAD");
+                    if (fd.getSize() != 0) {
+                        ctx.channel().pipeline().fireUserEventTriggered(fd);
+                    }
                     break;
             }
 

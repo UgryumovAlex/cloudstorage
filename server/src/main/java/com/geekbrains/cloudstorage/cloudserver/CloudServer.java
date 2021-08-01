@@ -26,8 +26,7 @@ public class CloudServer {
                         @Override
                         protected void initChannel(Channel channel) throws Exception {
                             channel.pipeline().addLast(
-                                    new FileReceiverHandler(),
-                                    //new FileSenderHandler(),
+                                    new FileProcessHandler(),
                                     new StringDecoder(),
                                     new StringEncoder(),
                                     new CommandValidateHandler(),
