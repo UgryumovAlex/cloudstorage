@@ -2,6 +2,10 @@ package com.geekbrains.cloudstorage.common;
 
 import java.io.Serializable;
 
+/**
+ * Класс используется для формирования объекта - ответа сервера клиенту
+ * */
+
 public class ServerResponse<T> implements Serializable {
     private final ResponseCommand responseCommand;
     private final T responseObject;

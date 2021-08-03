@@ -2,6 +2,12 @@ package com.geekbrains.cloudstorage.cloudserver;
 
 import com.geekbrains.cloudstorage.common.CloudUser;
 
+/**
+ * Класс, реализиующий объект, который формируется в обработчике CloudAuthHandler при успешной аутентификации
+ * пользователя
+ * CloudUser - пользователь
+ * ServerCommand - команда на сервер (наименование и значения параметров)
+ * */
 public class CloudUserCommand {
     private CloudUser user;
     private ServerCommand command;

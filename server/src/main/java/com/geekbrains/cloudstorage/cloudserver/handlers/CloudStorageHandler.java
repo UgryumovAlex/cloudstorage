@@ -19,7 +19,9 @@ import java.nio.file.FileAlreadyExistsException;
 import java.nio.file.NoSuchFileException;
 import java.nio.file.Paths;
 
-
+/**
+ * Обработчик предназначени для выполнения команд на сервере
+ * */
 public class CloudStorageHandler extends SimpleChannelInboundHandler<CloudUserCommand> {
 
     private final String serverStorageUserData = "server" + File.separator + "Storage" + File.separator + "UserData";
@@ -37,11 +39,11 @@ public class CloudStorageHandler extends SimpleChannelInboundHandler<CloudUserCo
 
             switch (s.getCommand().getName()) {
 
-                case "ls":
+                case "ls": //Получение содержимого текущего каталога
                     sendResponse(ctx, new ServerResponse<>(ResponseCommand.FILES_LIST, storageLogic.getFilesList(), storageLogic.getUserPath()));
                     break;
 
-                case "mkdir":
+                case "mkdir": //Создание нового каталога
                     try {
                         if (storageLogic.createDirectory(s.getCommand().getParams().get(0))) {
                             sendResponse(ctx, new ServerResponse<>(ResponseCommand.FILES_MKDIR_OK, storageLogic.getFilesList(), storageLogic.getUserPath()));
@@ -53,7 +55,7 @@ public class CloudStorageHandler extends SimpleChannelInboundHandler<CloudUserCo
                     }
                     break;
 
-                case "touch":
+                case "touch": //Создание нового файла
                     try {
                         if (storageLogic.createFile(s.getCommand().getParams().get(0))) {
                             sendResponse(ctx, new ServerResponse<>(ResponseCommand.FILES_TOUCH_OK, storageLogic.getFilesList(), storageLogic.getUserPath()));
@@ -66,7 +68,7 @@ public class CloudStorageHandler extends SimpleChannelInboundHandler<CloudUserCo
 
                     break;
 
-                case "cd":
+                case "cd": //Смена текущего каталога
                     try {
                         storageLogic.changeDirectory(s.getCommand().getParams().get(0));
                         sendResponse(ctx, new ServerResponse<>(ResponseCommand.FILES_CD_OK, storageLogic.getFilesList(), storageLogic.getUserPath()));
@@ -75,7 +77,7 @@ public class CloudStorageHandler extends SimpleChannelInboundHandler<CloudUserCo
                     }
                     break;
 
-                case "rm":
+                case "rm": //Удаление каталога. Если он не пустой, то формируется запрос пользователю на подтверждение
                     lastCommandWithResponseRequest = "rm";
                     lastCommandParam = s.getCommand().getParams().get(0);
                     try {
@@ -91,7 +93,7 @@ public class CloudStorageHandler extends SimpleChannelInboundHandler<CloudUserCo
                     }
                     break;
 
-                case "N":
+                case "N": //Используется при подтверждении удаления непустого каталога. Удаление отменяется
                     if (lastCommandWithResponseRequest != null) {
                         lastCommandWithResponseRequest = null;
                         lastCommandParam = null;
@@ -99,7 +101,7 @@ public class CloudStorageHandler extends SimpleChannelInboundHandler<CloudUserCo
                     }
                     break;
 
-                case "Y":
+                case "Y": //Используется при подтверждении удаления непустого каталога. Каталог удаляется
                     if (lastCommandWithResponseRequest != null && lastCommandWithResponseRequest.equals("rm")) {
                         try {
                             storageLogic.deleteNotEmptyDirectory(lastCommandParam);
@@ -113,15 +115,11 @@ public class CloudStorageHandler extends SimpleChannelInboundHandler<CloudUserCo
                     }
                     break;
 
-                case "copy":
-                    //storageLogic.copy(s.getCommand().getParams().get(0), s.getCommand().getParams().get(1));
-                    break;
-
-                case "uploadFile":
+                case "uploadFile": //Загрузка файла с клиента на сервер
                     File fileUp = new File(storageLogic.getCurrentPath() + File.separator + s.getCommand().getParams().get(0));
                     FileProcess fu = new FileProcess(fileUp, Long.parseLong(s.getCommand().getParams().get(1)), "UPLOAD");
                     if (fu.getSize() != 0) {
-                        ctx.channel().pipeline().fireUserEventTriggered(fu);
+                        ctx.channel().pipeline().fireUserEventTriggered(fu); //Включаем обработчик FileProcessHandler в режим UPLOAD
                     }
                     break;
 
@@ -129,7 +127,7 @@ public class CloudStorageHandler extends SimpleChannelInboundHandler<CloudUserCo
                     File fileDown = new File(storageLogic.getCurrentPath() + File.separator + s.getCommand().getParams().get(0));
                     FileProcess fd = new FileProcess(fileDown, Long.parseLong(s.getCommand().getParams().get(1)), "DOWNLOAD");
                     if (fd.getSize() != 0) {
-                        ctx.channel().pipeline().fireUserEventTriggered(fd);
+                        ctx.channel().pipeline().fireUserEventTriggered(fd); //Включаем обработчик FileProcessHandler в режим DOWNLOAD
                     }
                     break;
             }

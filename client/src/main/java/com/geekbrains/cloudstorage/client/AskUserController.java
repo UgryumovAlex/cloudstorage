@@ -7,6 +7,9 @@ import javafx.scene.control.Label;
 import javafx.scene.control.TextField;
 import javafx.stage.Stage;
 
+/**
+ * Контроллер для формы, которая используется для информирования и запроса пользователя
+ * */
 public class AskUserController {
 
     private Controller controller;
@@ -20,7 +23,7 @@ public class AskUserController {
     @FXML
     private Button btnAskNo;
 
-    private String actionType;
+    private String actionType; //Тип события, на которое вызывается форма : NewDirectory, NewFile, DirectoryDelete
 
     public void onBtnYesAction(ActionEvent actionEvent) {
         String userInput = textFieldAsk.getText().trim();

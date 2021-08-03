@@ -2,6 +2,9 @@ package com.geekbrains.cloudstorage.common;
 
 import java.io.Serializable;
 
+/**
+ * Класс, реализующий пользователя : логин, пароль и каталог на сервере
+ * */
 public class CloudUser implements Serializable {
     private String login;
     private String password;

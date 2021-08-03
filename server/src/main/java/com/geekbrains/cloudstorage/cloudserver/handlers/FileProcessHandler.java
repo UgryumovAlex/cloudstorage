@@ -10,13 +10,19 @@ import io.netty.channel.SimpleChannelInboundHandler;
 
 import java.io.*;
 
-
+/**
+ * Handler реализует методы UPLOAD и DOWNLOAD файла на и с сервера.
+ *
+ * */
 public class FileProcessHandler extends SimpleChannelInboundHandler<ByteBuf> {
     private FileProcess file;
     private Boolean inProcess = false;
     private long bytesProcessed;
     private RandomAccessFile randomAccessFile;
 
+    /**
+     * Включаем обработчик в режим выполнения команды upload или download
+     * */
     @Override
     public void userEventTriggered(ChannelHandlerContext ctx, Object evt) throws Exception {
         if (evt instanceof FileProcess) {
@@ -41,7 +47,7 @@ public class FileProcessHandler extends SimpleChannelInboundHandler<ByteBuf> {
             ctx.fireChannelRead(byteBuf.retain());
 
         } else {
-            if (file.getProcessDirection().equals("UPLOAD")) {
+            if (file.getProcessDirection().equals("UPLOAD")) { //Считываем массив байт, пришедших с клиента
                 byte[] bytes = new byte[byteBuf.readableBytes()];
                 byteBuf.readBytes(bytes);
                 bytesProcessed += bytes.length;
@@ -55,7 +61,7 @@ public class FileProcessHandler extends SimpleChannelInboundHandler<ByteBuf> {
                     sendResponse(ctx, new ServerResponse<>(ResponseCommand.FILE_UPLOAD_SUCCESS));
                 }
             }
-            if (file.getProcessDirection().equals("DOWNLOAD")) {
+            if (file.getProcessDirection().equals("DOWNLOAD")) { //Отправляем масси байт на клиента
                 byte[] buffer = new byte[16*1024];
                 int read = randomAccessFile.read(buffer);
                 ByteBuf bb = ctx.alloc().heapBuffer();
@@ -63,7 +69,7 @@ public class FileProcessHandler extends SimpleChannelInboundHandler<ByteBuf> {
                 bytesProcessed += read;
                 ctx.channel().writeAndFlush(bb);
 
-                if (bytesProcessed == file.getSize()) { //Всё считали, заканчиваем
+                if (bytesProcessed == file.getSize()) { //Всё отправили, заканчиваем
                     randomAccessFile.close();
                     file = null;
                     inProcess = false;

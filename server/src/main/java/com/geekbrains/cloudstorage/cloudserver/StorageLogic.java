@@ -8,6 +8,9 @@ import java.nio.file.*;
 import java.util.List;
 import java.util.stream.Collectors;
 
+/**
+ * Класс StorageLogic используется обработчиком CloudStorageHandler для выполнения команд на сервере
+ * */
 public class StorageLogic {
 
     private final Path rootPath;  //корневой каталог на сервере, предоставленный подключившемуся пользователю
@@ -20,6 +23,9 @@ public class StorageLogic {
         checkUserDirectory();
     }
 
+    /**
+     * Выполняется проверка, создан ли для пользователя каталог на сервере. Если нет, то создаётся.
+     * */
     private void checkUserDirectory() throws IOException {
         if (!Files.exists(rootPath)) {
             try {
@@ -30,14 +36,23 @@ public class StorageLogic {
         }
     }
 
+    /**
+     * Возвращается текущий каталог пользователя на сервере относительно корневого
+     * */
     public String getUserPath() {
         return rootPath.relativize(currentPath).toString();
     }
 
+    /**
+     * Возвращается текущий каталог пользователя на сервере
+     * */
     public String getCurrentPath() {
         return currentPath.toString();
     }
 
+    /**
+     * Возвращается список файлов и каталогов в текущем каталоге пользователя
+     * */
     public List<FileInfo> getFilesList() {
         try {
             return Files.list(currentPath).map(FileInfo::new).collect(Collectors.toList());
@@ -47,6 +62,9 @@ public class StorageLogic {
         return null;
     }
 
+    /**
+     * Создание нового каталога
+     * */
     public Boolean createDirectory(String newDir) throws IOException {
         Path newDirectory = Paths.get(currentPath.toString() + File.separator + newDir);
         if (Files.exists(newDirectory)) {
@@ -57,6 +75,9 @@ public class StorageLogic {
         }
     }
 
+    /**
+     * Создание нового файла
+     * */
     public Boolean createFile(String newFileName) throws IOException {
         Path newFile = Paths.get(currentPath.toString() + File.separator + newFileName);
         if (Files.exists(newFile)) {
@@ -67,6 +88,9 @@ public class StorageLogic {
         }
     }
 
+    /**
+     * Смена текущего каталога. Дальше корневого каталога пользователь выйти не может.
+     * */
     public void changeDirectory(String newDir) throws IllegalArgumentException {
         if ("~".equals(newDir)) {
             currentPath = rootPath;
@@ -84,6 +108,9 @@ public class StorageLogic {
         }
     }
 
+    /**
+     * Удаление файла или каталога
+     * */
     public Boolean removeFileOrDirectory(String pathToRemove) throws IOException {
         Path deletePath = Paths.get(currentPath.toString() + File.separator + pathToRemove);
         if (!Files.exists(deletePath)) {
@@ -100,11 +127,17 @@ public class StorageLogic {
         return true;
     }
 
+    /**
+     * Удаление непустого каталога
+     * */
     public void deleteNotEmptyDirectory(String directory) throws IOException {
         String dir = currentPath.toString() + File.separator + directory;
         deleteDirectory(Paths.get(dir));
     }
 
+    /**
+     * Реализация удаления непустого каталога
+     * */
     private void deleteDirectory(Path directory) throws  IOException {
         String[] files = new File(directory.toString()).list();
         if (files != null && files.length > 0) {
@@ -125,16 +158,6 @@ public class StorageLogic {
             Files.delete(directory);
         } catch (IOException e) {
             throw new IOException("ERROR_DELETING_DIRECTORY");
-        }
-    }
-
-    public void copy (String source, String destination) throws IllegalArgumentException, IOException {
-        Path sourcePath = Paths.get(currentPath.toString() + File.separator + source);
-        Path destinationPath = Paths.get(currentPath.toString() + File.separator + destination);
-        if (!Files.exists(sourcePath)) {
-            throw new IllegalArgumentException("SOURCE_NOT_FOUND");
-        } else {
-            Files.copy(sourcePath, destinationPath, StandardCopyOption.REPLACE_EXISTING);
         }
     }
 

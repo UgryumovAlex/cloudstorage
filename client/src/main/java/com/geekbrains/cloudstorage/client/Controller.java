@@ -33,6 +33,9 @@ import java.util.List;
 import java.util.ResourceBundle;
 import java.util.stream.Collectors;
 
+/**
+ * Контроллер основной формы
+ * */
 public class Controller implements Initializable {
 
     private Socket socket;
@@ -206,6 +209,9 @@ public class Controller implements Initializable {
         setAuthenticated(false);
     }
 
+    /**
+     * Подключение к серверу
+     * */
     private void connect() {
         try {
             socket = new Socket(IP_ADDRESS, PORT);
@@ -217,6 +223,9 @@ public class Controller implements Initializable {
         }
     }
 
+    /**
+     * Отключение от сервера
+     * */
     private void disconnect() {
         try {
             in.close();
@@ -230,12 +239,18 @@ public class Controller implements Initializable {
         }
     }
 
+    /**
+     * Вызывается по нажатию кнопки login. Отображается форма ввода логина и пароля
+     * */
     public void tryToLogin(ActionEvent actionEvent) {
         if (loginStage != null) { loginStage = null; }
         createLoginWindow();
         Platform.runLater(() -> loginStage.show());
     }
 
+    /**
+     * Создание формы ввода логина и пароля
+     * */
     private void createLoginWindow() {
         try {
             FXMLLoader fxmlLoader = new FXMLLoader(getClass().getResource("/login.fxml"));
@@ -255,12 +270,18 @@ public class Controller implements Initializable {
         }
     }
 
+    /**
+     * Вызывается по нажатию кнопки register. Отображается форма регистрации
+     * */
     public void tryToRegister(ActionEvent actionEvent) {
         if (registerStage != null) { registerStage = null; }
         createRegisterWindow();
         Platform.runLater(() -> registerStage.show());
     }
 
+    /**
+     * Создание формы регистрации пользователя
+     * */
     private void createRegisterWindow() {
         try {
             FXMLLoader fxmlLoader = new FXMLLoader(getClass().getResource("/register.fxml"));
@@ -280,6 +301,9 @@ public class Controller implements Initializable {
         }
     }
 
+    /**
+     * Чтение объекта из входящего потока
+     * */
     private Object readObject(){
         Object o = null;
         try{
@@ -291,6 +315,11 @@ public class Controller implements Initializable {
         return o;
     }
 
+    /**
+     * Аутентификация пользователя. Формируется команда на сервер auth с параметрами - значенями логина и пароля,
+     * введёнными с формы. Полученный ответ сервера анализируется. Если успешный, то информация о подключенном
+     * пользователе сохраняется.
+     * */
     public void authentication(String login, String password) {
 
         sendCommand(String.format("auth %s %s", login, password));
@@ -314,6 +343,9 @@ public class Controller implements Initializable {
         setAuthenticated(cloudUser!=null);
     }
 
+    /**
+     * Аналогично аутентификации
+     * */
     public void registration(String login, String password) {
 
         sendCommand(String.format("reg %s %s", login, password));
@@ -336,6 +368,9 @@ public class Controller implements Initializable {
         setAuthenticated(cloudUser!=null);
     }
 
+    /**
+     * Отправка команды на сервер
+     * */
     private void sendCommand(String command) {
 
         if (socket == null || socket.isClosed()) {
@@ -352,11 +387,17 @@ public class Controller implements Initializable {
 
     }
 
+    /**
+     * Настройка серверной части формы в зависимости от текущего пользователя
+     * */
     public void setAuthenticated(boolean authenticated) {
         this.authenticated = authenticated;
         setUserStatus();
     }
 
+    /**
+     * Вызывается при нажатии кнопки logout
+     * */
     public void tryToLogout(ActionEvent actionEvent) {
         sendCommand("disconnect");
 
@@ -370,6 +411,9 @@ public class Controller implements Initializable {
         setAuthenticated(cloudUser!=null);
     }
 
+    /**
+     * Настройка серверной части формы в зависимости от текущего пользователя
+     * */
     private void setUserStatus() {
         if (!authenticated) {
             labelInfo.setText("SERVER SIDE, user not connected");
@@ -409,6 +453,9 @@ public class Controller implements Initializable {
         }
     }
 
+    /**
+     * Заполнение табличной части на стороне клиента
+     * */
     private void getLocalFiles(Path path) {
         try {
             pathField.setText(path.normalize().toAbsolutePath().toString());
@@ -422,6 +469,9 @@ public class Controller implements Initializable {
         }
     }
 
+    /**
+     * Заполнение табличной части на стороне сервера
+     * */
     private void getRemoteFiles() {
         remoteTable.getItems().clear();
 
@@ -442,6 +492,9 @@ public class Controller implements Initializable {
         }
     }
 
+    /**
+     * Изменение текущего каталога пользоателя на сервере
+     * */
     private void changeRemoteDirectory(String newDir) {
         sendCommand(String.format("cd %s", newDir));
         Object o = readObject();
@@ -463,10 +516,16 @@ public class Controller implements Initializable {
         }
     }
 
+    /**
+     * Изменение текущего каталога пользоателя на сервере на один выше
+     * */
     public void cdRemoteDirUp(ActionEvent actionEvent) {
         changeRemoteDirectory("..");
     }
 
+    /**
+     * Изменение текущего каталога пользоателя на сервере на самый верх
+     * */
     public void cdRemoteDirRoot(ActionEvent actionEvent) {
         changeRemoteDirectory("~");
     }
@@ -498,6 +557,9 @@ public class Controller implements Initializable {
         Platform.runLater(() -> askUserStage.show());
     }
 
+    /**
+     * Создание каталога на сервере
+     * */
     public void createRemoteDirectory(String newDirectory) {
         if (newDirectory.length() > 0) {
             sendCommand(String.format("mkdir %s", newDirectory));
@@ -533,6 +595,9 @@ public class Controller implements Initializable {
         Platform.runLater(() -> askUserStage.show());
     }
 
+    /**
+     * Создание файла на сервере
+     * */
     public void createRemoteFile(String newFile) {
         if (newFile.length() > 0) {
             sendCommand(String.format("touch %s", newFile));
@@ -602,6 +667,9 @@ public class Controller implements Initializable {
         }
     }
 
+    /**
+     * Удаление каталога на сервере
+     * */
     public void deleteRemoteDirectory(String userAnswer) {
         sendCommand(userAnswer);
         Object o = readObject();
@@ -624,23 +692,26 @@ public class Controller implements Initializable {
         }
     }
 
+    /**
+     * Загрузка файла на сервер
+     * */
     private void uploadFile(String fileName, long size) {
-        sendCommand(String.format("uploadFile %s %s", fileName, size));
+        sendCommand(String.format("uploadFile %s %s", fileName, size)); //Отправляем команды
 
-        File file = new File(pathField.getText() + File.separator + fileName);
+        File file = new File(pathField.getText() + File.separator + fileName); //Фалй на клиенте к загрузке
         try {
             RandomAccessFile randomAccessFile = new RandomAccessFile(file, "r");
             randomAccessFile.seek(0);
 
-            byte[] buffer = new byte[16*1024];
+            byte[] buffer = new byte[16*1024]; //Буфер для порции файла
 
             for (int i = 0; i < (size + (buffer.length - 1)) / (buffer.length); i++) {
-                int read = randomAccessFile.read(buffer);
-                out.write(buffer, 0, read);
+                int read = randomAccessFile.read(buffer); //Считываем порцию файла в буфер
+                out.write(buffer, 0, read); //Отправляем на сервер
             }
             randomAccessFile.close();
 
-            Object o = readObject();
+            Object o = readObject();  //Получаем ответ сервера о результатах загрузки файла
             if (o instanceof ServerResponse) {
                 ServerResponse sr = (ServerResponse) o;
                 if (sr.getResponseCommand() == ResponseCommand.FILE_UPLOAD_SUCCESS) {
@@ -664,6 +735,9 @@ public class Controller implements Initializable {
         }
     }
 
+    /**
+     * Вызывается по кнопке UPLOAD
+     * */
     public void tryToUploadFile(ActionEvent actionEvent) {
         if (clientTable.getSelectionModel().getSelectedItem() != null) {
             FileInfo fi = clientTable.getSelectionModel().getSelectedItem();
@@ -676,11 +750,15 @@ public class Controller implements Initializable {
         }
     }
 
+    /**
+     * Загрузка файла с сервера
+     * */
     private void downloadFile(String fileName, long size) {
         try {
+            //Файл, который будет формироваться на клиенте
             File file = new File(pathField.getText() + File.separator + fileName);
             if (!file.exists()) {
-                sendCommand(String.format("downloadFile %s %s", fileName, size));
+                sendCommand(String.format("downloadFile %s %s", fileName, size)); //Отправляем команду серверу
 
                 RandomAccessFile randomAccessFile = new RandomAccessFile(file, "rw");
                 randomAccessFile.seek(0);
@@ -694,7 +772,7 @@ public class Controller implements Initializable {
                 }
                 randomAccessFile.close();
 
-                Object o = readObject();
+                Object o = readObject(); //Получаем ответ сервера о результатах скачивания файла
                 if (o instanceof ServerResponse) {
                     ServerResponse sr = (ServerResponse) o;
                     if (sr.getResponseCommand() == ResponseCommand.FILE_DOWNLOAD_SUCCESS) {
@@ -718,6 +796,9 @@ public class Controller implements Initializable {
         }
     }
 
+    /**
+     * Вызывается по кнопке DOWNLOAD
+     * */
     public void tryToDownloadFile(ActionEvent actionEvent) {
         if (remoteTable.getSelectionModel().getSelectedItem() != null) {
             FileInfo fi = remoteTable.getSelectionModel().getSelectedItem();

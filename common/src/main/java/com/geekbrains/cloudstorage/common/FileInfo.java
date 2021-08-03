@@ -7,6 +7,10 @@ import java.nio.file.Path;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 
+/**
+ * Класс, реализующий объект файл или каталог. Используется при формировании TableView как клиентской части,
+ * так и серверной.
+ * */
 public class FileInfo implements Serializable {
     public enum FileType {
         FILE("File"), DIRECTORY("Dir");

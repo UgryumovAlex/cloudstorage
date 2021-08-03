@@ -14,7 +14,13 @@ import java.io.IOException;
 import java.io.ObjectOutputStream;
 import java.nio.ByteBuffer;
 import java.sql.*;
-
+/**
+ * Обработчик для аутентификации и регистрации пользователя.
+ * Реализованы методы аутентификации, регистрации и отключения. При успешной регистрации происходит
+ * автоматическая аутентификация. Если пользователь подключен, то к команде, пришедшей с обработчика
+ * CommandValidateHandler добавляется информация о пользователе и она далее отправляется в следующий
+ * обработчик CloudStorageHandler.
+ * */
 public class CloudAuthHandler extends SimpleChannelInboundHandler<ServerCommand> {
 
     private Boolean user_authenticated = false;
@@ -63,6 +69,9 @@ public class CloudAuthHandler extends SimpleChannelInboundHandler<ServerCommand>
         }
     }
 
+    /**
+     * Аутентификация пользователя
+     * */
     private Boolean authenticateUser(String login, String password) {
         cloudUser = getUser(login, password);
         if (cloudUser != null) {
@@ -73,6 +82,9 @@ public class CloudAuthHandler extends SimpleChannelInboundHandler<ServerCommand>
         return user_authenticated;
     }
 
+    /**
+     * Получение информации о пользователе из БД по логину и паролю
+     * */
     private CloudUser getUser(String login, String password) {
         try {
             connect();
@@ -101,6 +113,9 @@ public class CloudAuthHandler extends SimpleChannelInboundHandler<ServerCommand>
         return null;
     }
 
+    /**
+     * Регистрация пользователя. Новый пользователь прописывается в БД. Логин должен быть уникальным.
+     * */
     private Boolean registerUser(String login, String password) {
         try {
             connect();
@@ -137,16 +152,25 @@ public class CloudAuthHandler extends SimpleChannelInboundHandler<ServerCommand>
         return false;
     }
 
+    /**
+     * Подключение к БД с пользователями
+     * */
     private void connect() throws ClassNotFoundException, SQLException {
         Class.forName("org.sqlite.JDBC");
         connection = DriverManager.getConnection("jdbc:sqlite:server/storage/config/cloudUsers.db");
     }
 
+    /**
+     * Отключение от БД
+     * */
     private void disconnect() throws SQLException {
         preparedStatement.close();
         connection.close();
     }
 
+    /**
+     * Ответ сервера клиенту.
+     * */
     private void sendResponse(ChannelHandlerContext ctx, ServerResponse<?> serverResponse) {
         ByteBuf bb = ctx.alloc().heapBuffer();
         try {

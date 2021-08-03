@@ -21,6 +21,9 @@ public class CommandValidateHandler extends SimpleChannelInboundHandler<String> 
 
     private Map<String, Integer> commandPatterns;
 
+    /**
+     * Из строки, содержащей команду с клиента с параметрами формируется объект типа ServerCommand
+     * */
     private ServerCommand getServerCommand(String s) {
         String command = s.replace("\n", "").replace("\r", "");
         String[] cmd = command.split(" ");
@@ -31,6 +34,9 @@ public class CommandValidateHandler extends SimpleChannelInboundHandler<String> 
         return new ServerCommand(cmd[0], params);
     }
 
+    /**
+     * Выполняется проверка для у указаной команды введено корректное количество параметров
+     * */
     private String validate(ServerCommand serverCommand) {
         Integer patternParams = commandPatterns.get(serverCommand.getName());
         if (patternParams == null) {
@@ -48,7 +54,7 @@ public class CommandValidateHandler extends SimpleChannelInboundHandler<String> 
     protected void channelRead0(ChannelHandlerContext ctx, String s) throws Exception {
         ServerCommand serverCommand = getServerCommand(s);
         String validateResult = validate(serverCommand);
-        if (validateResult.equals("SUCCESS")) {
+        if (validateResult.equals("SUCCESS")) { //Если команда прошла проверку, то она отправляется в следующий обработчик
             ctx.fireChannelRead(serverCommand);
         } else {
             ctx.writeAndFlush(validateResult + "\r\n");
@@ -57,6 +63,8 @@ public class CommandValidateHandler extends SimpleChannelInboundHandler<String> 
 
     @Override
     public void channelActive(ChannelHandlerContext ctx) throws Exception {
+        //Мапа, где в качестве ключа выступает наименование команды, а значение - количество параметров, которое должно быть.
+        //Используется для проверки корректности введённой команды
         commandPatterns = new HashMap<>();
         commandPatterns.put("auth", 2);
         commandPatterns.put("reg", 2);

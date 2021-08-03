@@ -3,6 +3,9 @@ package com.geekbrains.cloudstorage.common;
 import java.io.File;
 import java.io.Serializable;
 
+/**
+ * Класс используется для передачи информации о загружаемом или скачиваемом файле в обработчик FileProcessHandler
+ * */
 public class FileProcess implements Serializable {
 
     private File file;
